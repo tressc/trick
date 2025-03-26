@@ -13,7 +13,7 @@ type Suit = "spades" | "clubs" | "hearts" | "diamonds";
 
 type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
-type meterType = "tricks" | "suit" | "rank";
+type meterType = "tricks" | "suit" | "rank" | "special";
 
 interface Contract {
   name: string;
@@ -99,6 +99,22 @@ const stickers: Stickers = {
   },
 };
 
+const checkForThreeInARow = () => {
+  let numInARow = 0;
+  let maxInARow = 0;
+  return (evaluation: Evaluation): [number, boolean] => {
+    if (evaluation.result === "win") {
+      numInARow += 1;
+    } else {
+      numInARow = 0;
+    }
+    if (numInARow > maxInARow) {
+      maxInARow = numInARow;
+    }
+    return [maxInARow, maxInARow > 3];
+  };
+};
+
 /*
 contracts are checked at the end of each trick
 the meter defines the conditions, rewards, and penalties for each contract
@@ -142,7 +158,7 @@ const contracts: { [key: string]: Contract } = {
       return [0, false];
     },
   },
-  "no 5s or 7s": {
+  no5sor7s: {
     name: "no 5s or 7s",
     description: "avoid winning tricks with 5s or 7s",
     meter: {
@@ -170,6 +186,16 @@ const contracts: { [key: string]: Contract } = {
       }
       return [0, !anyRemaining];
     },
+  },
+  threeInARow: {
+    name: "three in a row",
+    description: "win exactly three tricks in a row",
+    meter: {
+      type: "special",
+      targets: [],
+      negative: false,
+    },
+    check: checkForThreeInARow(),
   },
 };
 
