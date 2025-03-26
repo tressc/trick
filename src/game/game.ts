@@ -9,18 +9,26 @@ interface Stickers {
   [key: string]: Sticker;
 }
 
+type Suit = "spades" | "clubs" | "hearts" | "diamonds";
+
+type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+type meterType = "tricks" | "suit" | "rank";
+
 interface Contract {
   name: string;
-  reward: string;
-  penalty: string;
   description: string;
-  phase: string;
-  resolve: Function;
+  check: (evaluation: Evaluation) => [number, boolean];
+  meter: {
+    type: meterType;
+    targets: number[] | string[];
+    negative: boolean;
+  };
 }
 
 interface Card {
-  suit: string;
-  rank: number;
+  suit: Suit;
+  rank: Rank;
   stickers: Sticker[];
 }
 
@@ -36,6 +44,7 @@ interface State {
   trumpCard: Card | null;
   activeContracts: string[];
   contractDeck: Contract[];
+  meterScore: number;
 }
 
 interface Evaluation {
@@ -64,6 +73,7 @@ const state: State = {
   cardsTaken: [],
   trumpCard: null,
   activeContracts: [],
+  meterScore: 0,
 };
 
 const stickers: Stickers = {
@@ -89,35 +99,76 @@ const stickers: Stickers = {
   },
 };
 
+/*
+contracts are checked at the end of each trick
+the meter defines the conditions, rewards, and penalties for each contract
+the check function returns a number to add to the meter, and a boolean representing whether the round should end early
+*/
 const contracts: { [key: string]: Contract } = {
   five: {
     name: "five",
     description: "win five tricks",
-    reward: "5 points",
-    penalty: "-5 points",
-    phase: phases.end,
-    resolve: () => {
-      if (state.tricksTaken == 5) {
-        state.score += 5;
-      } else {
-        state.score -= 5;
+    meter: {
+      type: "tricks",
+      targets: [5],
+      negative: false,
+    },
+    check: (evaluation: Evaluation): [number, boolean] => {
+      if (evaluation.result === "win") {
+        return [1, false];
       }
+      return [0, false];
     },
   },
   hearts: {
     name: "hearts",
     description: "win hearts",
-    reward: "1 point per heart",
-    penalty: "-5 points",
-    phase: phases.end,
-    resolve: () => {
-      if (state.cardsTaken.some((card) => card.suit === "hearts")) {
-        state.score += state.cardsTaken.filter(
-          (card) => card.suit === "hearts"
-        ).length;
-      } else {
-        state.score -= 5;
+    meter: {
+      type: "suit",
+      targets: ["hearts"],
+      negative: false,
+    },
+    check: (evaluation: Evaluation): [number, boolean] => {
+      if (evaluation.result === "win") {
+        let numHearts = 0;
+        if (evaluation.leadCard.suit === "hearts") {
+          numHearts += 1;
+        }
+        if (evaluation.followCard.suit === "hearts") {
+          numHearts += 1;
+        }
+        return [numHearts, false];
       }
+      return [0, false];
+    },
+  },
+  "no 5s or 7s": {
+    name: "no 5s or 7s",
+    description: "avoid winning tricks with 5s or 7s",
+    meter: {
+      type: "rank",
+      targets: [5, 7],
+      negative: true,
+    },
+    check: (evaluation: Evaluation): [number, boolean] => {
+      // if no 5s or 7s remain in hand or deck after this trick, end the round
+      const anyRemaining =
+        state.hand.some((card) => card.rank === 5 || card.rank === 7) ||
+        state.deck.some((card) => card.rank === 5 || card.rank === 7);
+      if (evaluation.result === "win") {
+        let numPenalties = 0;
+        if (evaluation.leadCard.rank === 5 || evaluation.leadCard.rank === 7) {
+          numPenalties += 1;
+        }
+        if (
+          evaluation.followCard.rank === 5 ||
+          evaluation.followCard.rank === 7
+        ) {
+          numPenalties += 1;
+        }
+        return [numPenalties, !anyRemaining];
+      }
+      return [0, !anyRemaining];
     },
   },
 };
@@ -285,16 +336,6 @@ const cards: Card[] = [
   },
 ];
 
-const sunAndMoonGame = () => {
-  cards.forEach((card) => {
-    if (card.rank % 2 !== 0) {
-      card.stickers.push(stickers.moon);
-    } else {
-      card.stickers.push(stickers.sun);
-    }
-  });
-};
-
 const shuffle = (deck: Card[]) => {
   for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * i);
@@ -308,7 +349,6 @@ const sortHand = () => {
 };
 
 const setup = () => {
-  sunAndMoonGame();
   state.deck = [...cards];
   shuffle(state.deck);
 };
