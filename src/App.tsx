@@ -1,77 +1,155 @@
 import "./App.css";
-import { useRef } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
+
+const cards = [
+  {
+    suit: "Spades",
+    rank: "A",
+  },
+  {
+    suit: "Spades",
+    rank: "2",
+  },
+  {
+    suit: "Spades",
+    rank: "3",
+  },
+  {
+    suit: "Spades",
+    rank: "4",
+  },
+  {
+    suit: "Spades",
+    rank: "5",
+  },
+  {
+    suit: "Spades",
+    rank: "6",
+  },
+  {
+    suit: "Spades",
+    rank: "7",
+  },
+  {
+    suit: "Spades",
+    rank: "8",
+  },
+  {
+    suit: "Hearts",
+    rank: "A",
+  },
+  {
+    suit: "Hearts",
+    rank: "2",
+  },
+  {
+    suit: "Hearts",
+    rank: "3",
+  },
+  {
+    suit: "Hearts",
+    rank: "4",
+  },
+  {
+    suit: "Hearts",
+    rank: "5",
+  },
+  {
+    suit: "Hearts",
+    rank: "6",
+  },
+  {
+    suit: "Hearts",
+    rank: "7",
+  },
+  {
+    suit: "Hearts",
+    rank: "8",
+  },
+];
 
 function App() {
-  gsap.registerPlugin(useGSAP);
-
-  const square = useRef<HTMLDivElement>(null);
-  const home = useRef<HTMLDivElement>(null);
-  const back = useRef<HTMLImageElement>(null);
-  const front = useRef<HTMLDivElement>(null);
-
-  const { contextSafe } = useGSAP({ scope: square });
-
-  const onClick = contextSafe(() => {
-    // if (!home.current) return;
-    // if (!square.current) return;
-    // const homeX = home.current.getBoundingClientRect().left;
-    // const homeY = home.current.getBoundingClientRect().top;
-    // const squareX = square.current.getBoundingClientRect().left;
-    // const squareY = square.current.getBoundingClientRect().top;
-    // gsap.to(square.current, {
-    //   x: (squareX - homeX) * -1,
-    //   y: (squareY - homeY) * -1,
-    //   rotation: "+=180",
-    // });
-
-    if (!front.current || !back.current) return;
-    const tl = gsap.timeline();
-    tl.fromTo(
-      back.current,
-      { rotationY: 0 },
-      { rotationY: 90, ease: "power1.easeIn", duration: 0.2 }
-    ).fromTo(
-      front.current,
-      {
-        rotationY: -90,
-      },
-      { rotationY: 0, ease: "power1.easeOut", duration: 0.2 }
+  const renderCard = (cardData: { suit: string; rank: string }) => {
+    const { suit, rank } = cardData;
+    const cardName = `${suit}${rank}`;
+    const humanReadable = `${rank} of ${suit}`;
+    return (
+      <div className="w-20 h-30 ">
+        <img src={`/Cards/card${cardName}.png`} alt={humanReadable} />
+      </div>
     );
-  });
+  };
+
+  const renderMeter = () => {
+    return (
+      <div className="absolute flex top-15 right-5">
+        <div className="w-2 h-80  boder-white divide-y-3">
+          {new Array(13).fill(0).map((_, index) => (
+            <div key={index} className="h-1/13"></div>
+          ))}
+        </div>
+        <div className=" w-10 h-80 border-2 boder-white rounded-sm overflow-hidden">
+          <div className="h-full flex-col divide-y-2">
+            <div className="w-10 h-6/13 bg-red-500"></div>
+            <div className="w-10 h-2/13 bg-yellow-500"></div>
+            <div className="w-10 h-1/13 bg-green-500"></div>
+            <div className="w-10 h-2/13 bg-yellow-500"></div>
+            <div className="w-10 h-2/13 bg-red-500"></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderPointer = () => {
+    return (
+      <div className="absolute right-15 top-15 w-10 h-80">
+        <div className="h-12/13" />
+        <div className="w-10 h-1/13 flex justify-end items-center">
+          <div className="border-solid border-l-cyan-300 border-l-8 border-y-transparent border-y-8 border-r-0" />
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <>
-      <div className="flex justify-around w-svw">
-        <div ref={home} className="bg-blue-500 w-24 h-24" />
-        {/* <div className="w-[100px] h-[144px] bg-[url(/individuals/club/1_club.png)]" /> */}
-        <div className="absolute w-[140px] h-[190px] perspective-normal transform-3d">
-          <div ref={front} className="absolute">
-            <div className="absolute bg-radial from-blue-400 to-blue-700 to-75%  w-[130px] h-[180px] top-[5px] left-[5px]" />
-            <img
-              className="relative mix-blend-lighten w-[140px] h-[190px]"
-              src="/Cards/cardClubs9.png"
-              alt="club"
-            />
-          </div>
-          <img
-            ref={back}
-            className="absolute"
-            src="/Cards/cardBack_blue2.png"
-            alt="card back"
-          />
-        </div>
-        <div className="bg-red-500 w-24 h-24" />
-        <button className="m-8" onClick={onClick}>
-          Click me
-        </button>
+    <div className="bg-green-800 bg-cover bg-no-repeat bg-[url(/dither.jpg)] bg-blend-multiply min-h-screen min-w-screen flex flex-col justify-end items-center">
+      {renderMeter()}
+      {renderPointer()}
+      <div className="absolute top-0 left-0 h-100 w-full flex justify-center items-center">
+        {renderCard({
+          suit: "Diamonds",
+          rank: "4",
+        })}
       </div>
-
-      <div className="flex flex-col justify-center items-center">
-        <div ref={square} className="bg-red-500 w-12 h-12"></div>
+      <div className="flex translate-x-3">
+        {cards.slice(0, 7).map((card, index) => {
+          return (
+            <div
+              key={`${card.suit}${card.rank}`}
+              style={{
+                transform: `translateX(-${35 * index}px)`,
+              }}
+            >
+              {renderCard(card)}
+            </div>
+          );
+        })}
       </div>
-    </>
+      <div className="flex -translate-y-5">
+        {cards.slice(8, 14).map((card, index) => {
+          return (
+            <div
+              key={`${card.suit}${card.rank}`}
+              style={{
+                transform: `translateX(-${35 * index}px)`,
+              }}
+            >
+              {renderCard(card)}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

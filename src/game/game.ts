@@ -377,4 +377,13 @@ const sortHand = () => {
 const setup = () => {
   state.deck = [...cards];
   shuffle(state.deck);
+  state.hand = state.deck.slice(0, 13);
+  state.deck = state.deck.slice(13);
+  state.trumpCard = state.deck.pop() || null;
+};
+
+const playHand = () => {};
+
+const playCard = () => {
+  state.leadCard = state.hand.pop() || null;
 };
